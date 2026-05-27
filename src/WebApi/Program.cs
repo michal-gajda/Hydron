@@ -18,6 +18,8 @@ public sealed class Program
         builder.Services.AddApplication();
         builder.Services.AddInfrastructure(builder.Configuration);
 
+        builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
+
         builder.Services.AddControllers();
         builder.Services.AddOpenApi();
 

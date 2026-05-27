@@ -9,14 +9,21 @@ public sealed class OrderEntity
     public CustomerId CustomerId { get; private set; }
     public OrderStatus Status { get; private set; } = OrderStatus.Created;
     public int Version { get; private set; }
-    private readonly List<object> domainEvents = new();
-    public IReadOnlyCollection<object> DomainEvents => this.domainEvents.AsReadOnly();
+    private readonly List<DomainEvent> domainEvents = new();
+    public IReadOnlyCollection<DomainEvent> DomainEvents => this.domainEvents.AsReadOnly();
+    public DateTimeOffset LastModifiedAtUtc => this.domainEvents.Max(domainEvent => domainEvent.AddedAtUtc);
+    internal IReadOnlyCollection<DomainEvent> UnpublishedDomainEvents => this.domainEvents.Where(domainEvent => !domainEvent.IsPublished).ToArray();
 
-    public OrderEntity(OrderId id, CustomerId customerId) : this(id, customerId, OrderStatus.Created, 1)
+    public OrderEntity(OrderId id, CustomerId customerId, DateTimeOffset createdAtUtc)
+        : this(id, customerId, OrderStatus.Created, 1, new[] { new OrderCreatedDomainEvent { Id = id, AddedAtUtc = createdAtUtc, IsPublished = false } })
     {
+        if (createdAtUtc == default)
+        {
+            throw new InvalidDomainStateException("Order creation timestamp must be provided.");
+        }
     }
 
-    internal OrderEntity(OrderId id, CustomerId customerId, OrderStatus status, int version)
+    internal OrderEntity(OrderId id, CustomerId customerId, OrderStatus status, int version, IReadOnlyCollection<DomainEvent>? domainEvents)
     {
         Guard.AgainstDefault(id);
         Guard.AgainstDefault(customerId);
@@ -35,6 +42,34 @@ public sealed class OrderEntity
         this.CustomerId = customerId;
         this.Status = status;
         this.Version = version;
+
+        if (domainEvents is not null)
+        {
+            foreach (var domainEvent in domainEvents.OrderBy(domainEvent => domainEvent.AddedAtUtc))
+            {
+                if (domainEvent is null)
+                {
+                    throw new InvalidDomainStateException("Domain event cannot be null.");
+                }
+
+                if (domainEvent.AddedAtUtc == default)
+                {
+                    throw new InvalidDomainStateException("Domain event timestamp must be provided.");
+                }
+
+                this.domainEvents.Add(domainEvent);
+            }
+        }
+
+        if (this.Status is OrderStatus.Fulfilled or OrderStatus.Finalized && this.domainEvents.All(domainEvent => domainEvent is not OrderDispatchedDomainEvent))
+        {
+            throw new InvalidDomainStateException("Dispatch event must be present for fulfilled or finalized orders.");
+        }
+
+        if (this.domainEvents.Count == 0)
+        {
+            throw new InvalidDomainStateException("Order must contain at least one domain event.");
+        }
     }
 
     public void ConfirmPayment()
@@ -77,12 +112,30 @@ public sealed class OrderEntity
 
     public void ClearDomainEvents() => this.domainEvents.Clear();
 
-    private void AddDomainEvent(DomainEvent domainEvent)
+    internal void MarkDomainEventAsPublished(DomainEvent domainEvent)
     {
         if (domainEvent is null)
         {
             throw new ArgumentNullException(nameof(domainEvent));
         }
+
+        if (!this.domainEvents.Contains(domainEvent))
+        {
+            throw new InvalidDomainStateException("Cannot mark a domain event that does not belong to this aggregate.");
+        }
+
+        domainEvent.IsPublished = true;
+    }
+
+    private void AddDomainEvent(DomainEvent domainEvent, DateTimeOffset? addedAtUtc = null)
+    {
+        if (domainEvent is null)
+        {
+            throw new ArgumentNullException(nameof(domainEvent));
+        }
+
+        domainEvent.AddedAtUtc = addedAtUtc ?? DateTimeOffset.UtcNow;
+        domainEvent.IsPublished = false;
 
         this.domainEvents.Add(domainEvent);
     }

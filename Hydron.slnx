@@ -15,4 +15,8 @@
   <Folder Name="/src/WebApi/">
     <Project Path="src/WebApi/Hydron.WebApi.csproj" />
   </Folder>
+  <Folder Name="/tests/" />
+  <Folder Name="/tests/Application.FunctionalTests/">
+    <Project Path="tests/Application.FunctionalTests/Hydron.Application.FunctionalTests.csproj" />
+  </Folder>
 </Solution>

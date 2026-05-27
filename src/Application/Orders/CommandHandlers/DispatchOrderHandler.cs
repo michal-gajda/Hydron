@@ -3,6 +3,7 @@ namespace Hydron.Application.Orders.CommandHandlers;
 using Hydron.Application.Orders.Commands;
 using Hydron.Domain.Exceptions;
 using Hydron.Domain.Interfaces;
+using Hydron.Telemetry;
 
 internal sealed class DispatchOrderHandler(IOrderRepository orderRepository) : IRequestHandler<DispatchOrder, Result>
 {
@@ -19,6 +20,8 @@ internal sealed class DispatchOrderHandler(IOrderRepository orderRepository) : I
         {
             order.Dispatch();
             await orderRepository.SaveAsync(order, cancellationToken);
+
+            OrdersTelemetry.RecordOrderTimeToDispatch(order);
 
             return Result.Ok();
         }

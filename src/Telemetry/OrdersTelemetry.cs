@@ -1,6 +1,8 @@
 namespace Hydron.Telemetry;
 
 using System.Diagnostics;
+using Hydron.Domain.Entities;
+using Hydron.Domain.Events;
 using Hydron.Domain.ValueObjects;
 
 public static class OrdersTelemetry
@@ -20,6 +22,39 @@ public static class OrdersTelemetry
             1,
             new KeyValuePair<string, object?>("order.operation", "create"),
             new KeyValuePair<string, object?>("order.customer_id", customerId.ToString()));
+    }
+
+    public static void RecordOrderTimeToDispatch(OrderEntity order)
+    {
+        ArgumentNullException.ThrowIfNull(order);
+
+        var createdAtUtc = order.DomainEvents
+            .OfType<OrderCreatedDomainEvent>()
+            .Select(domainEvent => domainEvent.AddedAtUtc)
+            .DefaultIfEmpty(default)
+            .Min();
+
+        var dispatchedAtUtc = order.DomainEvents
+            .OfType<OrderDispatchedDomainEvent>()
+            .Select(domainEvent => domainEvent.AddedAtUtc)
+            .DefaultIfEmpty(default)
+            .Min();
+
+        if (createdAtUtc == default || dispatchedAtUtc == default)
+        {
+            return;
+        }
+
+        var seconds = (dispatchedAtUtc - createdAtUtc).TotalSeconds;
+        if (seconds < 0)
+        {
+            seconds = 0;
+        }
+
+        OrdersMetrics.OrderTimeToDispatchHistogram.Record(
+            seconds,
+            new KeyValuePair<string, object?>("order.operation", "dispatch"),
+            new KeyValuePair<string, object?>("order.status", order.Status.ToString()));
     }
 
     public static void MarkSuccess(Activity? activity)

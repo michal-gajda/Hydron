@@ -1,9 +1,9 @@
 namespace Hydron.Application.Orders.CommandHandlers;
 
 using Hydron.Application.Orders.Commands;
-using Hydron.Application.Telemetry;
 using Hydron.Domain.Entities;
 using Hydron.Domain.Interfaces;
+using Hydron.Telemetry;
 
 internal sealed class CreateOrderHandler(IOrderRepository orderRepository) : IRequestHandler<CreateOrder, Result>
 {
@@ -13,7 +13,8 @@ internal sealed class CreateOrderHandler(IOrderRepository orderRepository) : IRe
 
         try
         {
-            var entity = new OrderEntity(request.Id, request.CustomerId);
+            var createdAtUtc = DateTimeOffset.UtcNow;
+            var entity = new OrderEntity(request.Id, request.CustomerId, createdAtUtc);
             await orderRepository.SaveAsync(entity, cancellationToken);
 
             OrdersTelemetry.RecordCreateOrderSuccess(request.CustomerId);

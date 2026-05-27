@@ -1,6 +1,6 @@
 namespace Hydron.WebApi;
 
-using Hydron.Application.Telemetry;
+using Hydron.Telemetry;
 using OpenTelemetry;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Logs;
