@@ -1,10 +1,8 @@
 ﻿namespace Hydron.Application.FunctionalTests;
 
-[TestClass]
-public sealed class Test1
+public abstract class TestBase
 {
-    [TestMethod]
-    public void TestMethod1()
+    public TestBase()
     {
     }
 }

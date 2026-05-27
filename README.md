@@ -32,3 +32,20 @@ dotnet new classlib --framework net10.0 --output src/Telemetry --name Hydron.Tel
 dotnet sln add src/Telemetry
 dotnet add src/Application reference src/Telemetry
 ```
+
+## Functional Tests
+
+```powershell
+dotnet new mstest --framework net10.0 --output tests/Application.FunctionalTests --name Hydron.Application.FunctionalTests
+dotnet sln add tests/Application.FunctionalTests
+dotnet add tests/Application.FunctionalTests reference src/Infrastructure
+```
+
+```powershell
+dotnet add tests/Application.FunctionalTests package Microsoft.Extensions.Configuration
+dotnet add tests/Application.FunctionalTests package Microsoft.Extensions.DependencyInjection
+dotnet add tests/Application.FunctionalTests package Microsoft.Extensions.Logging
+dotnet add tests/Application.FunctionalTests package Shouldly
+```
+
+## End-to-End Tests
