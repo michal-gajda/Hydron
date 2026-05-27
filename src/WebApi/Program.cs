@@ -1,5 +1,8 @@
 namespace Hydron.WebApi;
 
+using Hydron.Application;
+using Hydron.Infrastructure;
+
 public sealed class Program
 {
     private Program()
@@ -9,6 +12,11 @@ public sealed class Program
     public static async Task<int> Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+
+        builder.AddObservability(serviceName: "Hydron.WebApi", serviceNamespace: "Hydron");
+
+        builder.Services.AddApplication();
+        builder.Services.AddInfrastructure(builder.Configuration);
 
         builder.Services.AddControllers();
         builder.Services.AddOpenApi();

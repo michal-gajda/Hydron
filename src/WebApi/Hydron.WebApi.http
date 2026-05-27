@@ -1,6 +1,111 @@
 @WebApi_HostAddress = http://localhost:5080
+@CustomerId = 11111111-1111-1111-1111-111111111111
+@MissingOrderId = 99999999-9999-9999-9999-999999999999
+@EmptyGuid = 00000000-0000-0000-0000-000000000000
+
+# HEALTHCHECK / SAMPLE
 
 GET {{WebApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
+
+# CREATE ORDER (happy path)
+# @name createOrder
+POST {{WebApi_HostAddress}}/orders
+Content-Type: application/json
+Accept: application/json
+
+{
+	"customerId": "{{CustomerId}}"
+}
+
+###
+
+# Capture order id from create response.
+@OrderId = {{createOrder.response.body.$.orderId}}
+
+###
+
+# CONFIRM PAYMENT (happy path)
+POST {{WebApi_HostAddress}}/orders/{{OrderId}}/confirm-payment
+Accept: application/json
+
+###
+
+# DISPATCH (happy path)
+POST {{WebApi_HostAddress}}/orders/{{OrderId}}/dispatch
+Accept: application/json
+
+###
+
+# DELIVER (happy path)
+POST {{WebApi_HostAddress}}/orders/{{OrderId}}/deliver
+Accept: application/json
+
+###
+
+# CANCEL (invalid state after delivery -> expected 400)
+POST {{WebApi_HostAddress}}/orders/{{OrderId}}/cancel
+Accept: application/json
+
+###
+
+# CREATE ORDER (validation error: empty customer id -> expected 400)
+POST {{WebApi_HostAddress}}/orders
+Content-Type: application/json
+Accept: application/json
+
+{
+	"customerId": "{{EmptyGuid}}"
+}
+
+###
+
+# CONFIRM PAYMENT (not found -> expected 404)
+POST {{WebApi_HostAddress}}/orders/{{MissingOrderId}}/confirm-payment
+Accept: application/json
+
+###
+
+# DISPATCH (not found -> expected 404)
+POST {{WebApi_HostAddress}}/orders/{{MissingOrderId}}/dispatch
+Accept: application/json
+
+###
+
+# DELIVER (not found -> expected 404)
+POST {{WebApi_HostAddress}}/orders/{{MissingOrderId}}/deliver
+Accept: application/json
+
+###
+
+# CANCEL (not found -> expected 404)
+POST {{WebApi_HostAddress}}/orders/{{MissingOrderId}}/cancel
+Accept: application/json
+
+###
+
+# CONFIRM PAYMENT (bad request: empty order id -> expected 400)
+POST {{WebApi_HostAddress}}/orders/{{EmptyGuid}}/confirm-payment
+Accept: application/json
+
+###
+
+# DISPATCH (bad request: empty order id -> expected 400)
+POST {{WebApi_HostAddress}}/orders/{{EmptyGuid}}/dispatch
+Accept: application/json
+
+###
+
+# DELIVER (bad request: empty order id -> expected 400)
+POST {{WebApi_HostAddress}}/orders/{{EmptyGuid}}/deliver
+Accept: application/json
+
+###
+
+# CANCEL (bad request: empty order id -> expected 400)
+POST {{WebApi_HostAddress}}/orders/{{EmptyGuid}}/cancel
 Accept: application/json
 
 ###

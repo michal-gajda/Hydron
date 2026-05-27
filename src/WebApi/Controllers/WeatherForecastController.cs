@@ -1,6 +1,6 @@
-using Microsoft.AspNetCore.Mvc;
-
 namespace Hydron.WebApi.Controllers;
+
+using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
 [Route("[controller]")]
