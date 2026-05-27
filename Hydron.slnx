@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/WebApi/">
+    <Project Path="src/WebApi/Hydron.WebApi.csproj" />
+  </Folder>
+</Solution>
