@@ -28,14 +28,14 @@ public abstract class ExtendedTestBase : IDisposable
             .Build();
         this.services.AddSingleton<IConfiguration>(configuration);
 
-        this.services.AddApplication();
-        this.services.AddInfrastructure(configuration);
-
         this.services.AddLogging(cfg =>
         {
             cfg.AddDebug();
             cfg.SetMinimumLevel(LogLevel.Trace);
         });
+
+        this.services.AddApplication();
+        this.services.AddInfrastructure(configuration);
     }
 
     public void Dispose()

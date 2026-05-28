@@ -3,6 +3,7 @@ namespace Hydron.Application.Orders.CommandHandlers;
 using Hydron.Application.Orders.Commands;
 using Hydron.Application.Orders.Exceptions;
 using Hydron.Domain.Interfaces;
+using Hydron.Telemetry;
 
 internal sealed class CancelOrderHandler(IOrderRepository orderRepository, TimeProvider timeProvider) : IRequestHandler<CancelOrder, Result>
 {
@@ -18,6 +19,8 @@ internal sealed class CancelOrderHandler(IOrderRepository orderRepository, TimeP
         var createdAtUtc = timeProvider.GetUtcNow();
         order.Cancel(createdAtUtc);
         await orderRepository.SaveAsync(order, cancellationToken);
+
+        OrdersTelemetry.RecordOrderTimeToCompletion(order);
 
         return Result.Ok();
     }

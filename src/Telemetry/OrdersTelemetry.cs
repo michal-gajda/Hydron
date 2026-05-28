@@ -57,6 +57,65 @@ public static class OrdersTelemetry
             new KeyValuePair<string, object?>("order.status", order.Status.ToString()));
     }
 
+    public static void RecordOrderTimeToCompletion(OrderEntity order)
+    {
+        ArgumentNullException.ThrowIfNull(order);
+
+        var createdAtUtc = order.DomainEvents
+            .OfType<OrderCreatedDomainEvent>()
+            .Select(domainEvent => domainEvent.AddedAtUtc)
+            .DefaultIfEmpty(default)
+            .Min();
+
+        var deliveredAtUtc = order.DomainEvents
+            .OfType<OrderDeliveredDomainEvent>()
+            .Select(domainEvent => domainEvent.AddedAtUtc)
+            .DefaultIfEmpty(default)
+            .Min();
+
+        var cancelledAtUtc = order.DomainEvents
+            .OfType<OrderCancelledDomainEvent>()
+            .Select(domainEvent => domainEvent.AddedAtUtc)
+            .DefaultIfEmpty(default)
+            .Min();
+
+        if (createdAtUtc == default)
+        {
+            return;
+        }
+
+        DateTimeOffset completedAtUtc;
+        string completionType;
+
+        if (deliveredAtUtc == default && cancelledAtUtc == default)
+        {
+            return;
+        }
+
+        if (deliveredAtUtc == default || (cancelledAtUtc != default && cancelledAtUtc < deliveredAtUtc))
+        {
+            completedAtUtc = cancelledAtUtc;
+            completionType = "cancel";
+        }
+        else
+        {
+            completedAtUtc = deliveredAtUtc;
+            completionType = "deliver";
+        }
+
+        var seconds = (completedAtUtc - createdAtUtc).TotalSeconds;
+        if (seconds < 0)
+        {
+            seconds = 0;
+        }
+
+        OrdersMetrics.OrderTimeToCompletionHistogram.Record(
+            seconds,
+            new KeyValuePair<string, object?>("order.operation", "completion"),
+            new KeyValuePair<string, object?>("order.completion_type", completionType),
+            new KeyValuePair<string, object?>("order.status", order.Status.ToString()));
+    }
+
     public static void MarkSuccess(Activity? activity)
     {
         activity?.SetStatus(ActivityStatusCode.Ok);

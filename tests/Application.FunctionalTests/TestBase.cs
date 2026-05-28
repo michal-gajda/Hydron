@@ -28,14 +28,16 @@ public abstract class TestBase : IDisposable
             .Build();
         services.AddSingleton<IConfiguration>(configuration);
 
-        services.AddApplication();
-        services.AddInfrastructure(configuration);
-
         services.AddLogging(cfg =>
         {
             cfg.AddDebug();
             cfg.SetMinimumLevel(LogLevel.Trace);
         });
+
+        services.AddSingleton(TimeProvider.System);
+
+        services.AddApplication();
+        services.AddInfrastructure(configuration);
 
         this.ServiceProvider = services.BuildServiceProvider();
     }
