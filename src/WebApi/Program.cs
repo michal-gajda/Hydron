@@ -20,10 +20,18 @@ public sealed class Program
 
         builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
 
+        builder.Services.AddProblemDetails();
+        builder.Services.AddExceptionHandler<CleanArchitectureExceptionHandler>();
+
         builder.Services.AddControllers();
         builder.Services.AddOpenApi();
 
         var app = builder.Build();
+
+        app.UseExceptionHandler();
+        app.UseStatusCodePages();
+
+        app.MapHealthChecks("/healthz");
 
         var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
         lifetime.ApplicationStopped.Register(() =>
