@@ -4,7 +4,7 @@ using Hydron.Application.Orders.Commands;
 using Hydron.Domain.Exceptions;
 using Hydron.Domain.Interfaces;
 
-internal sealed class ConfirmOrderPaymentHandler(IOrderRepository orderRepository) : IRequestHandler<ConfirmOrderPayment, Result>
+internal sealed class ConfirmOrderPaymentHandler(IOrderRepository orderRepository, TimeProvider timeProvider) : IRequestHandler<ConfirmOrderPayment, Result>
 {
     public async Task<Result> Handle(ConfirmOrderPayment request, CancellationToken cancellationToken)
     {
@@ -17,7 +17,8 @@ internal sealed class ConfirmOrderPaymentHandler(IOrderRepository orderRepositor
 
         try
         {
-            order.ConfirmPayment();
+            var createdAtUtc = timeProvider.GetUtcNow();
+            order.ConfirmPayment(createdAtUtc);
             await orderRepository.SaveAsync(order, cancellationToken);
 
             return Result.Ok();

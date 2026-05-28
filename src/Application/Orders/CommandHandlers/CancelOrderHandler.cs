@@ -4,7 +4,7 @@ using Hydron.Application.Orders.Commands;
 using Hydron.Domain.Exceptions;
 using Hydron.Domain.Interfaces;
 
-internal sealed class CancelOrderHandler(IOrderRepository orderRepository) : IRequestHandler<CancelOrder, Result>
+internal sealed class CancelOrderHandler(IOrderRepository orderRepository, TimeProvider timeProvider) : IRequestHandler<CancelOrder, Result>
 {
     public async Task<Result> Handle(CancelOrder request, CancellationToken cancellationToken)
     {
@@ -17,7 +17,8 @@ internal sealed class CancelOrderHandler(IOrderRepository orderRepository) : IRe
 
         try
         {
-            order.Cancel();
+            var createdAtUtc = timeProvider.GetUtcNow();
+            order.Cancel(createdAtUtc);
             await orderRepository.SaveAsync(order, cancellationToken);
 
             return Result.Ok();

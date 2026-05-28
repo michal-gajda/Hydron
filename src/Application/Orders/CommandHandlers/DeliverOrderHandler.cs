@@ -4,7 +4,7 @@ using Hydron.Application.Orders.Commands;
 using Hydron.Domain.Exceptions;
 using Hydron.Domain.Interfaces;
 
-internal sealed class DeliverOrderHandler(IOrderRepository orderRepository) : IRequestHandler<DeliverOrder, Result>
+internal sealed class DeliverOrderHandler(IOrderRepository orderRepository, TimeProvider timeProvider) : IRequestHandler<DeliverOrder, Result>
 {
     public async Task<Result> Handle(DeliverOrder request, CancellationToken cancellationToken)
     {
@@ -17,7 +17,8 @@ internal sealed class DeliverOrderHandler(IOrderRepository orderRepository) : IR
 
         try
         {
-            order.DeliverOrder();
+            var createdAtUtc = timeProvider.GetUtcNow();
+            order.DeliverOrder(createdAtUtc);
             await orderRepository.SaveAsync(order, cancellationToken);
 
             return Result.Ok();

@@ -5,7 +5,7 @@ using Hydron.Domain.Exceptions;
 using Hydron.Domain.Interfaces;
 using Hydron.Telemetry;
 
-internal sealed class DispatchOrderHandler(IOrderRepository orderRepository) : IRequestHandler<DispatchOrder, Result>
+internal sealed class DispatchOrderHandler(IOrderRepository orderRepository, TimeProvider timeProvider) : IRequestHandler<DispatchOrder, Result>
 {
     public async Task<Result> Handle(DispatchOrder request, CancellationToken cancellationToken)
     {
@@ -18,7 +18,8 @@ internal sealed class DispatchOrderHandler(IOrderRepository orderRepository) : I
 
         try
         {
-            order.Dispatch();
+            var createdAtUtc = timeProvider.GetUtcNow();
+            order.Dispatch(createdAtUtc);
             await orderRepository.SaveAsync(order, cancellationToken);
 
             OrdersTelemetry.RecordOrderTimeToDispatch(order);

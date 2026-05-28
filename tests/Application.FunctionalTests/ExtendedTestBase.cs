@@ -1,4 +1,4 @@
-﻿namespace Hydron.Application.FunctionalTests;
+namespace Hydron.Application.FunctionalTests;
 
 using Microsoft.Extensions.Logging;
 using System.Diagnostics.CodeAnalysis;
@@ -8,16 +8,16 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 [ExcludeFromCodeCoverage]
-public abstract class TestBase : IDisposable
+public abstract class ExtendedTestBase : IDisposable
 {
     public required TestContext TestContext { get; init; } // public TestContext TestContext { get; set; } = null!;
-    protected ServiceProvider ServiceProvider { get; private set; }
+    protected ServiceProvider ServiceProvider { get => services.BuildServiceProvider(); }
+    protected ServiceCollection Services => this.services;
+    private readonly ServiceCollection services = new();
     private bool isDisposed;
 
-    protected TestBase()
+    protected ExtendedTestBase()
     {
-        var services = new ServiceCollection();
-
         var collection = new Dictionary<string, string?>
         {
 
@@ -26,18 +26,16 @@ public abstract class TestBase : IDisposable
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(collection)
             .Build();
-        services.AddSingleton<IConfiguration>(configuration);
+        this.services.AddSingleton<IConfiguration>(configuration);
 
-        services.AddApplication();
-        services.AddInfrastructure(configuration);
+        this.services.AddApplication();
+        this.services.AddInfrastructure(configuration);
 
-        services.AddLogging(cfg =>
+        this.services.AddLogging(cfg =>
         {
             cfg.AddDebug();
             cfg.SetMinimumLevel(LogLevel.Trace);
         });
-
-        this.ServiceProvider = services.BuildServiceProvider();
     }
 
     public void Dispose()
@@ -55,8 +53,7 @@ public abstract class TestBase : IDisposable
 
         if (disposing)
         {
-            this.ServiceProvider?.Dispose();
-            this.ServiceProvider = null!;
+            this.services?.Clear();
         }
 
         this.isDisposed = true;

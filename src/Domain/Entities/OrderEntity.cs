@@ -72,32 +72,34 @@ public sealed class OrderEntity
         }
     }
 
-    public void ConfirmPayment()
+    public void ConfirmPayment(DateTimeOffset confirmedAtUtc)
     {
         this.EnsureStatus(OrderStatus.Created, nameof(ConfirmPayment));
 
         this.Status = OrderStatus.Confirmed;
 
-        this.AddDomainEvent(new OrderConfirmedDomainEvent { Id = this.Id, });
+        this.AddDomainEvent(new OrderConfirmedDomainEvent { Id = this.Id, AddedAtUtc = confirmedAtUtc, });
     }
 
-    public void Dispatch()
+    public void Dispatch(DateTimeOffset dispatchedAtUtc)
     {
         this.EnsureStatus(OrderStatus.Confirmed, nameof(Dispatch));
 
         this.Status = OrderStatus.Fulfilled;
 
-        this.AddDomainEvent(new OrderDispatchedDomainEvent { Id = this.Id });
+        this.AddDomainEvent(new OrderDispatchedDomainEvent { Id = this.Id, AddedAtUtc = dispatchedAtUtc, });
     }
 
-    public void DeliverOrder()
+    public void DeliverOrder(DateTimeOffset deliveredAtUtc)
     {
         this.EnsureStatus(OrderStatus.Fulfilled, nameof(DeliverOrder));
 
         this.Status = OrderStatus.Finalized;
+
+        this.AddDomainEvent(new OrderDeliveredDomainEvent { Id = this.Id, AddedAtUtc = deliveredAtUtc, });
     }
 
-    public void Cancel()
+    public void Cancel(DateTimeOffset cancelledAtUtc)
     {
         if (this.Status is OrderStatus.Fulfilled or OrderStatus.Finalized or OrderStatus.Cancelled)
         {
@@ -107,10 +109,10 @@ public sealed class OrderEntity
         var oldStatus = this.Status;
         this.Status = OrderStatus.Cancelled;
 
-        this.AddDomainEvent(new OrderCancelledDomainEvent { Id = Id, OldStatus = oldStatus, });
+        this.AddDomainEvent(new OrderCancelledDomainEvent { Id = Id, OldStatus = oldStatus, AddedAtUtc = cancelledAtUtc, });
     }
 
-    public void ClearDomainEvents() => this.domainEvents.Clear();
+    internal void ClearDomainEvents() => this.domainEvents.Clear();
 
     internal void MarkDomainEventAsPublished(DomainEvent domainEvent)
     {

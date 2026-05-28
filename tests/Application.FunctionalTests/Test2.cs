@@ -1,32 +1,39 @@
-﻿namespace Hydron.Application.FunctionalTests;
+namespace Hydron.Application.FunctionalTests;
 
 using Hydron.Application.Orders.Commands;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Time.Testing;
 
 [TestClass]
-public sealed class Test1 : TestBase
+public sealed class Test2 : ExtendedTestBase
 {
     [ClassInitialize]
     public static void ClassInitialize(TestContext testContext)
     {
-        testContext.WriteLine("Test1 ClassInitialize: Context is now available.");
+        // testContext.WriteLine("Test2 ClassInitialize: Context is now available.");
     }
 
     [ClassCleanup]
     public static void ClassCleanup(TestContext testContext)
     {
-        testContext.WriteLine("Test1 ClassCleanup: Context is now available.");
+        // testContext.WriteLine("Test2 ClassCleanup: Context is now available.");
     }
 
     [TestInitialize]
     public void TestInitialize()
     {
-        this.TestContext.WriteLine("Test1 TestInitialize: Context is now available.");
+        var timeProvider = new FakeTimeProvider();
+
+        timeProvider.SetUtcNow(new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+
+        this.Services.Replace(ServiceDescriptor.Singleton<TimeProvider>(timeProvider));
+        this.TestContext.WriteLine("Test2 TestInitialize: Context is now available.");
     }
 
     [TestCleanup]
     public void TestCleanup()
     {
-        this.TestContext.WriteLine("Test1 TestCleanup: Context is now available.");
+        // this.TestContext.WriteLine("Test2 TestCleanup: Context is now available.");
     }
 
     [TestMethod]
@@ -53,5 +60,20 @@ public sealed class Test1 : TestBase
         // Assert
         result.IsSuccess.ShouldBeTrue();
         result.IsFailed.ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public async Task TestMethod2()
+    {
+        // Arrange
+        var timeProvider = this.ServiceProvider.GetRequiredService<TimeProvider>();
+
+        // Act
+        var now = timeProvider.GetUtcNow();
+
+        // Assert
+        now.Year.ShouldBe(2024);
+        now.Month.ShouldBe(1);
+        now.Day.ShouldBe(1);
     }
 }

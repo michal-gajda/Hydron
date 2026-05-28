@@ -1,5 +1,21 @@
-﻿namespace Hydron.Application.FunctionalTests;
+# TDD
 
+## Functional Tests
+
+### Nugets
+
+- Microsoft.Extensions.Configuration
+- Microsoft.Extensions.DependencyInjection
+- Microsoft.Extensions.Logging
+- Shouldly
+
+### References
+
+- src\Infrastructure
+
+### TestBase class
+
+```csharp
 using Microsoft.Extensions.Logging;
 using System.Diagnostics.CodeAnalysis;
 using Application;
@@ -10,9 +26,8 @@ using Microsoft.Extensions.DependencyInjection;
 [ExcludeFromCodeCoverage]
 public abstract class TestBase : IDisposable
 {
-    public required TestContext TestContext { get; init; } // public TestContext TestContext { get; set; } = null!;
-    protected ServiceProvider ServiceProvider { get; private set; }
     private bool isDisposed;
+    protected ServiceProvider ServiceProvider { get; private set; }
 
     protected TestBase()
     {
@@ -62,3 +77,4 @@ public abstract class TestBase : IDisposable
         this.isDisposed = true;
     }
 }
+```
