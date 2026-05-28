@@ -46,6 +46,7 @@ internal sealed class OrderDbEntity
             OrderCreatedDomainEvent => new OrderDomainEventDbEntity { Type = nameof(OrderCreatedDomainEvent), AddedAtUtc = domainEvent.AddedAtUtc, IsPublished = domainEvent.IsPublished },
             OrderConfirmedDomainEvent => new OrderDomainEventDbEntity { Type = nameof(OrderConfirmedDomainEvent), AddedAtUtc = domainEvent.AddedAtUtc, IsPublished = domainEvent.IsPublished },
             OrderDispatchedDomainEvent => new OrderDomainEventDbEntity { Type = nameof(OrderDispatchedDomainEvent), AddedAtUtc = domainEvent.AddedAtUtc, IsPublished = domainEvent.IsPublished },
+            OrderDeliveredDomainEvent => new OrderDomainEventDbEntity { Type = nameof(OrderDeliveredDomainEvent), AddedAtUtc = domainEvent.AddedAtUtc, IsPublished = domainEvent.IsPublished },
             OrderCancelledDomainEvent cancelled => new OrderDomainEventDbEntity { Type = nameof(OrderCancelledDomainEvent), AddedAtUtc = domainEvent.AddedAtUtc, OldStatus = cancelled.OldStatus, IsPublished = domainEvent.IsPublished },
             _ => throw new InvalidOperationException($"Unsupported domain event type '{domainEvent.GetType().Name}'."),
         };
@@ -58,6 +59,7 @@ internal sealed class OrderDbEntity
             nameof(OrderCreatedDomainEvent) => new OrderCreatedDomainEvent { Id = orderId },
             nameof(OrderConfirmedDomainEvent) => new OrderConfirmedDomainEvent { Id = orderId },
             nameof(OrderDispatchedDomainEvent) => new OrderDispatchedDomainEvent { Id = orderId },
+            nameof(OrderDeliveredDomainEvent) => new OrderDeliveredDomainEvent { Id = orderId },
             nameof(OrderCancelledDomainEvent) => new OrderCancelledDomainEvent { Id = orderId, OldStatus = domainEvent.OldStatus ?? throw new InvalidOperationException("OldStatus is required for cancellation events.") },
             _ => throw new InvalidOperationException($"Unsupported domain event type '{domainEvent.Type}'."),
         };
@@ -67,12 +69,4 @@ internal sealed class OrderDbEntity
 
         return mappedEvent;
     }
-}
-
-internal sealed class OrderDomainEventDbEntity
-{
-    public required string Type { get; init; }
-    public DateTimeOffset AddedAtUtc { get; init; }
-    public OrderStatus? OldStatus { get; init; }
-    public bool IsPublished { get; init; }
 }
