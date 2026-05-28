@@ -1,7 +1,7 @@
 namespace Hydron.Application.Orders.CommandHandlers;
 
 using Hydron.Application.Orders.Commands;
-using Hydron.Domain.Exceptions;
+using Hydron.Application.Orders.Exceptions;
 using Hydron.Domain.Interfaces;
 using Hydron.Telemetry;
 
@@ -13,22 +13,15 @@ internal sealed class DispatchOrderHandler(IOrderRepository orderRepository, Tim
 
         if (order is null)
         {
-            return Result.Fail(OrderErrors.NotFound(request.Id));
+            throw new OrderNotFoundException(request.Id);
         }
 
-        try
-        {
-            var createdAtUtc = timeProvider.GetUtcNow();
-            order.Dispatch(createdAtUtc);
-            await orderRepository.SaveAsync(order, cancellationToken);
+        var createdAtUtc = timeProvider.GetUtcNow();
+        order.Dispatch(createdAtUtc);
+        await orderRepository.SaveAsync(order, cancellationToken);
 
-            OrdersTelemetry.RecordOrderTimeToDispatch(order);
+        OrdersTelemetry.RecordOrderTimeToDispatch(order);
 
-            return Result.Ok();
-        }
-        catch (InvalidDomainStateException exception)
-        {
-            return Result.Fail(OrderErrors.InvalidState(exception.Message));
-        }
+        return Result.Ok();
     }
 }

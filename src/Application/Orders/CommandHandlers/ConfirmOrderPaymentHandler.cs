@@ -1,7 +1,7 @@
 namespace Hydron.Application.Orders.CommandHandlers;
 
 using Hydron.Application.Orders.Commands;
-using Hydron.Domain.Exceptions;
+using Hydron.Application.Orders.Exceptions;
 using Hydron.Domain.Interfaces;
 
 internal sealed class ConfirmOrderPaymentHandler(IOrderRepository orderRepository, TimeProvider timeProvider) : IRequestHandler<ConfirmOrderPayment, Result>
@@ -12,20 +12,13 @@ internal sealed class ConfirmOrderPaymentHandler(IOrderRepository orderRepositor
 
         if (order is null)
         {
-            return Result.Fail(OrderErrors.NotFound(request.Id));
+            throw new OrderNotFoundException(request.Id);
         }
 
-        try
-        {
-            var createdAtUtc = timeProvider.GetUtcNow();
-            order.ConfirmPayment(createdAtUtc);
-            await orderRepository.SaveAsync(order, cancellationToken);
+        var createdAtUtc = timeProvider.GetUtcNow();
+        order.ConfirmPayment(createdAtUtc);
+        await orderRepository.SaveAsync(order, cancellationToken);
 
-            return Result.Ok();
-        }
-        catch (InvalidDomainStateException exception)
-        {
-            return Result.Fail(OrderErrors.InvalidState(exception.Message));
-        }
+        return Result.Ok();
     }
 }

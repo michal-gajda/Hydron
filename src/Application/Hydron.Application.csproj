@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Using Alias="ApplicationException" Include="Hydron.Application.Common.ApplicationException" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Using Include="FluentResults" />
     <Using Include="FluentValidation" />
     <Using Include="Hydron.Domain.ValueObjects" />
